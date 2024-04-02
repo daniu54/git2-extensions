@@ -1,7 +1,7 @@
-use git2_extensions::ExtendedRepository;
+use git2_extensions::Repository;
 
 fn main() {
-    let repo = &mut ExtendedRepository::new(".");
+    let repo = &mut Repository::new(".");
 
     repo.set_main_branch("main");
 

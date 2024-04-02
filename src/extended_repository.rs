@@ -1,12 +1,12 @@
-use crate::ExtendedCommit;
+use crate::Commit;
 
-pub struct ExtendedRepository<'r> {
+pub struct Repository<'r> {
     pub repository: git2::Repository,
     pub repository_path: &'r str,
     pub main_branch: Option<&'r str>,
 }
 
-impl<'r> ExtendedRepository<'r> {
+impl<'r> Repository<'r> {
     pub fn new(repository_path: &'r str) -> Self {
         let repository = git2::Repository::open(repository_path).unwrap();
 
@@ -17,8 +17,8 @@ impl<'r> ExtendedRepository<'r> {
         }
     }
 
-    pub fn get_commits_of_current_branch(&'r self) -> Vec<ExtendedCommit> {
-        let mut commits: Vec<ExtendedCommit> = vec![];
+    pub fn get_commits_of_current_branch(&'r self) -> Vec<Commit> {
+        let mut commits: Vec<Commit> = vec![];
 
         let head = self.repository.head().unwrap();
         let top_commit = head.target().unwrap();
@@ -66,7 +66,7 @@ impl<'r> ExtendedRepository<'r> {
                 });
             }
 
-            let extended_commit = ExtendedCommit {
+            let extended_commit = Commit {
                 commit,
                 changed_files,
             };
