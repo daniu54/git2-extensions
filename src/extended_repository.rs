@@ -1,4 +1,4 @@
-use crate::Commit;
+use crate::{Commit, File};
 
 pub struct Repository<'r> {
     pub repository: git2::Repository,
@@ -45,7 +45,7 @@ impl<'r> Repository<'r> {
                 break;
             }
 
-            let mut changed_files: Vec<String> = vec![];
+            let mut changed_files: Vec<File> = vec![];
 
             for parent in commit.parents() {
                 let diff = self
@@ -57,13 +57,12 @@ impl<'r> Repository<'r> {
                     )
                     .unwrap();
 
-                diff.deltas().for_each(|delta| {
-                    changed_files.push(format!(
-                        "{}/{}",
-                        self.repository_path,
-                        delta.new_file().path().unwrap().to_str().unwrap()
-                    ));
-                });
+                changed_files.append(
+                    &mut diff
+                        .deltas()
+                        .map(|delta| File::from_delta(delta, self))
+                        .collect(),
+                );
             }
 
             let extended_commit = Commit {

@@ -9,6 +9,6 @@ fn main() {
 
     println!("Commits on current branch:");
     for commit in commits {
-        println!("{:?}", commit);
+        println!("{:#?}", commit);
     }
 }
