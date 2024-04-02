@@ -17,51 +17,8 @@ impl<'r> ExtendedRepository<'r> {
         }
     }
 
-    // FIXME does not work as expected, example usage:
-    // let diff_options = &mut DiffOptions::new();
-
-    // diff_options.include_untracked(true);
-    // diff_options.recurse_untracked_dirs(true);
-
-    // let changed_files = repo.get_changed_files(diff_options);
-    // println!("Added files on current branch:");
-    // for file in changed_files {
-    //     println!("{}", file);
-    // }
-    pub(crate) fn _get_changed_files(
-        &'r self,
-        diff_options: &mut git2::DiffOptions,
-    ) -> Vec<String> {
-        let mut files: Vec<String> = vec![];
-
-        // TODO need more precision here
-        files.append(
-            &mut self
-                .repository
-                .diff_index_to_workdir(None, Some(diff_options))
-                .unwrap()
-                .deltas()
-                .map(|f| f.new_file().path().unwrap().to_str().unwrap().to_string())
-                .collect::<Vec<String>>(),
-        );
-
-        // TODO need more precision here
-        files.append(
-            &mut self
-                .repository
-                .diff_index_to_workdir(None, Some(diff_options))
-                .unwrap()
-                .deltas()
-                .map(|f| f.old_file().path().unwrap().to_str().unwrap().to_string())
-                .collect::<Vec<String>>(),
-        );
-
-        files
-    }
-
     pub fn get_commits_of_current_branch(&'r self) -> Vec<ExtendedCommit> {
-        // TODO rename
-        let mut files_to_check: Vec<ExtendedCommit> = vec![];
+        let mut commits: Vec<ExtendedCommit> = vec![];
 
         let head = self.repository.head().unwrap();
         let top_commit = head.target().unwrap();
@@ -78,8 +35,6 @@ impl<'r> ExtendedRepository<'r> {
             .merge_base(top_commit, main_top_commit.id())
             .unwrap();
 
-        // FIXME probably don't need to iterate and manually check
-        // FIXME instead use https://docs.rs/git2/latest/git2/struct.Revwalk.html#method.push_range with top_commit + main
         let mut revwalk = self.repository.revwalk().unwrap();
         revwalk.push(top_commit).unwrap();
 
@@ -90,9 +45,7 @@ impl<'r> ExtendedRepository<'r> {
                 break;
             }
 
-            // println!("{:?}", commit);
-
-            let mut new_files_to_check: Vec<String> = vec![];
+            let mut changed_files: Vec<String> = vec![];
 
             for parent in commit.parents() {
                 let diff = self
@@ -105,7 +58,7 @@ impl<'r> ExtendedRepository<'r> {
                     .unwrap();
 
                 diff.deltas().for_each(|delta| {
-                    new_files_to_check.push(format!(
+                    changed_files.push(format!(
                         "{}/{}",
                         self.repository_path,
                         delta.new_file().path().unwrap().to_str().unwrap()
@@ -115,13 +68,13 @@ impl<'r> ExtendedRepository<'r> {
 
             let extended_commit = ExtendedCommit {
                 commit,
-                changed_files: new_files_to_check,
+                changed_files,
             };
 
-            files_to_check.push(extended_commit);
+            commits.push(extended_commit);
         }
 
-        files_to_check
+        commits
     }
 
     pub fn set_main_branch(&mut self, main_branch_name: &'r str) {
