@@ -1,6 +1,7 @@
 use crate::{Commit, File};
 
 use std::ops::Deref;
+use std::convert::AsRef;
 
 pub struct Repository<'r> {
     repository: git2::Repository,
@@ -12,6 +13,12 @@ impl<'r> Deref for Repository<'r> {
     type Target = git2::Repository;
 
     fn deref(&self) -> &Self::Target {
+        &self.repository
+    }
+}
+
+impl<'r> AsRef<git2::Repository> for Repository<'r> {
+    fn as_ref(&self) -> &git2::Repository {
         &self.repository
     }
 }
