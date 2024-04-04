@@ -1,7 +1,7 @@
 use crate::{Commit, File};
 
-use std::ops::Deref;
 use std::convert::AsRef;
+use std::ops::Deref;
 
 pub struct Repository<'r> {
     repository: git2::Repository,
