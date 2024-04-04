@@ -1,9 +1,26 @@
 use crate::{Commit, File};
 
+use std::ops::Deref;
+use std::convert::AsRef;
+
 pub struct Repository<'r> {
-    pub repository: git2::Repository,
+    repository: git2::Repository,
     pub repository_path: &'r str,
     pub main_branch: Option<&'r str>,
+}
+
+impl<'r> Deref for Repository<'r> {
+    type Target = git2::Repository;
+
+    fn deref(&self) -> &Self::Target {
+        &self.repository
+    }
+}
+
+impl<'r> AsRef<git2::Repository> for Repository<'r> {
+    fn as_ref(&self) -> &git2::Repository {
+        &self.repository
+    }
 }
 
 impl<'r> Repository<'r> {
@@ -20,26 +37,22 @@ impl<'r> Repository<'r> {
     pub fn get_commits_of_current_branch(&'r self) -> Vec<Commit> {
         let mut commits: Vec<Commit> = vec![];
 
-        let head = self.repository.head().unwrap();
+        let head = self.head().unwrap();
         let top_commit = head.target().unwrap();
 
         let main = self
-            .repository
             .find_branch(self.main_branch.unwrap(), git2::BranchType::Local)
             .unwrap();
 
         let main_top_commit = main.get().peel_to_commit().unwrap();
 
-        let merge_base_commit = self
-            .repository
-            .merge_base(top_commit, main_top_commit.id())
-            .unwrap();
+        let merge_base_commit = self.merge_base(top_commit, main_top_commit.id()).unwrap();
 
-        let mut revwalk = self.repository.revwalk().unwrap();
+        let mut revwalk = self.revwalk().unwrap();
         revwalk.push(top_commit).unwrap();
 
         for oid in revwalk {
-            let commit = self.repository.find_commit(oid.unwrap()).unwrap();
+            let commit = self.find_commit(oid.unwrap()).unwrap();
 
             if commit.id() == merge_base_commit {
                 break;
@@ -49,7 +62,6 @@ impl<'r> Repository<'r> {
 
             for parent in commit.parents() {
                 let diff = self
-                    .repository
                     .diff_tree_to_tree(
                         Some(&parent.tree().unwrap()),
                         Some(&commit.tree().unwrap()),
