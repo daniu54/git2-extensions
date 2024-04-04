@@ -28,8 +28,8 @@ impl File {
 
         let old_file_path = old_file.path().and_then(|p| p.to_str());
 
-        let blob_new = repository.repository.find_blob(new_file.id()).ok();
-        let blob_old = repository.repository.find_blob(old_file.id()).ok();
+        let blob_new = repository.find_blob(new_file.id()).ok();
+        let blob_old = repository.find_blob(old_file.id()).ok();
 
         let mut line_cb =
             |delta: DiffDelta<'_>, _hunk: Option<DiffHunk<'_>>, line: DiffLine<'_>| {
@@ -42,7 +42,6 @@ impl File {
         let mut opts = DiffOptions::new();
 
         repository
-            .repository
             .diff_blobs(
                 blob_old.as_ref(),
                 old_file_path,
